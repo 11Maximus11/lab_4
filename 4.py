@@ -50,6 +50,8 @@ class LensRasterizationApp:
         tk.Label(control_frame, text="Сохранение", font=("Arial", 10, "bold")).pack(pady=10, anchor='w')
         tk.Button(control_frame, text="Сохранить как (PNG, JPG...)", command=self.save_image).pack(pady=2, fill=tk.X)
         tk.Button(control_frame, text="Сохранить в PBM (ч/б текст)", command=self.save_as_pbm).pack(pady=2, fill=tk.X)
+        # --- НОВАЯ КНОПКА ---
+        tk.Button(control_frame, text="Сохранить в PPM P3 (цветной текст)", command=self.save_as_ppm).pack(pady=2, fill=tk.X)
         
         self.create_canvas()
 
@@ -189,6 +191,46 @@ class LensRasterizationApp:
             messagebox.showinfo("Успех", f"Изображение успешно сохранено в PBM формате:\n{file_path}")
         except Exception as e:
             messagebox.showerror("Ошибка", f"Не удалось сохранить файл: {e}")
+
+  
+    def save_as_ppm(self):
+        """Конвертирует изображение в текстовый цветной формат PPM P3."""
+        if not self.image:
+            messagebox.showerror("Ошибка", "Нет изображения для сохранения.")
+            return
+
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".ppm",
+            filetypes=[("PPM file", "*.ppm"), ("Все файлы", "*.*")]
+        )
+        if not file_path:
+            return
+
+        width, height = self.image.size
+        
+        try:
+            with open(file_path, 'w') as f:
+                # 1. Заголовок PPM P3
+                f.write("P3\n")
+                f.write(f"# Lens R1={self.r1_entry.get()}, R2={self.r2_entry.get()}, t={self.t_entry.get()}\n")
+                f.write(f"{width} {height}\n")
+                f.write("255\n") # Максимальное значение цвета
+                
+                # 2. Данные пикселей (R G B)
+                for y in range(height):
+                    row_data = []
+                    for x in range(width):
+                        r, g, b = self.image.getpixel((x, y))
+                        row_data.append(str(r))
+                        row_data.append(str(g))
+                        row_data.append(str(b))
+                    # Записываем строку пикселей (R G B R G B ...) в файл
+                    f.write(" ".join(row_data) + "\n")
+            
+            messagebox.showinfo("Успех", f"Изображение успешно сохранено в PPM P3 формате:\n{file_path}")
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Не удалось сохранить файл: {e}")
+
 
 if __name__ == "__main__":
     root = tk.Tk()
